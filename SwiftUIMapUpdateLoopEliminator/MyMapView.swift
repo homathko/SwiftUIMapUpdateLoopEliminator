@@ -13,12 +13,13 @@ struct AnnotationViewModel: Identifiable {
 }
 
 struct MyMapView: View {
+    var mapState: MapViewState = .init()
     var annotations: [MapAnno]
     @State var visibleSprites: [AnnotationViewModel] = []
 
     var body: some View {
         ZStack {
-            MapViewRepresentable { coordinator in
+            MapViewRepresentable(state: mapState) { coordinator in
                 DispatchQueue.global(qos: .userInteractive).async {
                     let updated = coordinator.annotations.map { annotation -> AnnotationViewModel in
                         var result = AnnotationViewModel(coordinate: annotation.coordinate)
@@ -38,26 +39,32 @@ struct MyMapView: View {
                 AnimatedAnnotation(viewModel: annotation)
             }
         }
+                .environmentObject(mapState)
     }
 }
 
 struct AnimatedAnnotation: View {
+    @EnvironmentObject var mapState: MapViewState
     var viewModel: AnnotationViewModel
     @State private var opacity: Double = 1.0
     @State private var scale: CGFloat = 1.0
 
     var body: some View {
-            Circle()
-                    .fill(Color.green)
-                    .frame(width: 20.0, height: 20.0).scaleEffect(scale)
-                    .opacity(opacity)
-                    .onAppear {
-                        withAnimation(animation) {
-                            self.opacity = 0.0
-                            self.scale = 2.0
-                        }
-                    }
-                    .position(viewModel.screenCoordinates ?? CGPoint(x: 0, y: 0))
+        Circle()
+                .fill(Color.green)
+                .frame(width: 20.0, height: 20.0).scaleEffect(scale)
+                .opacity(opacity)
+//                .onAppear {
+//                    withAnimation(animation) {
+//                        self.opacity = 0.2
+//                        self.scale = 2.0
+//                    }
+//                }
+                .onTapGesture {
+                    mapState.focused = viewModel
+                    print("Tapped \(viewModel.id)")
+                }
+                .position(viewModel.screenCoordinates ?? CGPoint(x: 0, y: 0))
     }
 
     var animation: Animation {

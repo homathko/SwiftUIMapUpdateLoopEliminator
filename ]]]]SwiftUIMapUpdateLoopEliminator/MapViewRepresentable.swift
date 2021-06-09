@@ -8,7 +8,7 @@ import CoreGraphics
 import MapKit
 
 struct MapViewRepresentable: UIViewRepresentable {
-
+    @ObservedObject var state: MapViewState
     var annotations = [MapAnno]()
 
     func annotations (_ annotations: [MapAnno]) -> Self {
@@ -22,6 +22,7 @@ struct MapViewRepresentable: UIViewRepresentable {
     func makeUIView (context: Context) -> MKMapView {
         let mapView = MKMapView()
         mapView.setCenter(CLLocationCoordinate2D(latitude: 33.0, longitude: 0.0), animated: true)
+        mapView.setCameraZoomRange(.init(maxCenterCoordinateDistance: 1000000), animated: false)
         mapView.delegate = context.coordinator
         context.coordinator.parent = self
         context.coordinator.mapView = mapView
@@ -29,7 +30,11 @@ struct MapViewRepresentable: UIViewRepresentable {
     }
 
     func updateUIView (_ uiView: MKMapView, context: Context) {
+        print("Updating viewRep")
         context.coordinator.annotations = annotations
+        if let focused = state.focused {
+            uiView.setCenter(focused.coordinate, animated: true)
+        }
     }
 
     func makeCoordinator () -> MapViewRepresentable.Coordinator {
