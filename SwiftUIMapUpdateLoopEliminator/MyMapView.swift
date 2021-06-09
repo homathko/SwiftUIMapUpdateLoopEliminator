@@ -6,32 +6,35 @@ import SwiftUI
 import MapKit
 import CoreLocation
 
-class AnnotationViewModel: NSObject, Identifiable, MKAnnotation {
+struct AnnotationViewModel: Identifiable {
     var id = UUID().uuidString
     var coordinate: CLLocationCoordinate2D
     var screenCoordinates: CGPoint?
-
-    init(coordinate: CLLocationCoordinate2D) {
-        self.coordinate = coordinate
-    }
 }
 
 struct MyMapView: View {
-    @State var annotations: [AnnotationViewModel]
+    var annotations: [MapAnno]
+    @State var visibleSprites: [AnnotationViewModel] = []
 
     var body: some View {
         ZStack {
             MapViewRepresentable { coordinator in
-                annotations = coordinator.annotations
-                        .map { (annotation: AnnotationViewModel) in
-                            annotation.screenCoordinates = coordinator.mapView?.convert(annotation.coordinate, toPointTo: nil)
-                            return annotation
-                        }
+                DispatchQueue.global(qos: .userInteractive).async {
+                    let updated = coordinator.annotations.map { annotation -> AnnotationViewModel in
+                        var result = AnnotationViewModel(coordinate: annotation.coordinate)
+                        result.screenCoordinates = coordinator.mapView?.convert(annotation.coordinate, toPointTo: nil)
+                        return result
+                    }
+
+                    DispatchQueue.main.async {
+                        self.visibleSprites = updated
+                    }
+                }
             }
                     .annotations(annotations)
 
             /// This layer shows the annotations
-            ForEach(annotations) { annotation in
+            ForEach(visibleSprites, id: \.id) { annotation in
                 AnimatedAnnotation(viewModel: annotation)
             }
         }
@@ -40,28 +43,26 @@ struct MyMapView: View {
 
 struct AnimatedAnnotation: View {
     var viewModel: AnnotationViewModel
-    var duration: Double = Double.random(in: 0.2...0.6)
-    @State var opacity: Double = 1.0
-    @State var scale: CGFloat = 1.0
+    @State private var opacity: Double = 1.0
+    @State private var scale: CGFloat = 1.0
 
     var body: some View {
-        Circle()
-                .frame(width: 20.0, height: 20.0)
-                .foregroundColor(.green)
-                .opacity(opacity)
-                .scaleEffect(scale)
-                .position(viewModel.screenCoordinates ?? CGPoint(x: 0, y: 0))
-                .onAppear {
-                    withAnimation(animation) {
-                        self.opacity = 0.0
-                        self.scale = 2.0
+            Circle()
+                    .fill(Color.green)
+                    .frame(width: 20.0, height: 20.0).scaleEffect(scale)
+                    .opacity(opacity)
+                    .onAppear {
+                        withAnimation(animation) {
+                            self.opacity = 0.0
+                            self.scale = 2.0
+                        }
                     }
-                }
+                    .position(viewModel.screenCoordinates ?? CGPoint(x: 0, y: 0))
     }
 
     var animation: Animation {
         Animation
-                .easeInOut(duration: duration)
+                .easeInOut(duration: Double.random(in: 0.2...0.6))
                 .repeatForever()
     }
 }

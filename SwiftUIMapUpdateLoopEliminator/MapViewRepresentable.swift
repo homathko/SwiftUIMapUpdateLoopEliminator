@@ -9,9 +9,9 @@ import MapKit
 
 struct MapViewRepresentable: UIViewRepresentable {
 
-    var annotations = [AnnotationViewModel]()
+    var annotations = [MapAnno]()
 
-    func annotations (_ annotations: [AnnotationViewModel]) -> Self {
+    func annotations (_ annotations: [MapAnno]) -> Self {
         var updated = self
         updated.annotations = annotations
         return updated
@@ -39,15 +39,35 @@ struct MapViewRepresentable: UIViewRepresentable {
     class Coordinator: NSObject, MKMapViewDelegate {
         var parent: MapViewRepresentable?
         var mapView: MKMapView?
-        var annotations: [AnnotationViewModel] = [] {
+        var annotations: [MapAnno] = [] {
             didSet {
-                syncAnnotations(old: oldValue)
+                syncAnnotations()
             }
         }
 
-        func syncAnnotations (old: [AnnotationViewModel]) {
-            mapView?.removeAnnotations(old)
-            mapView?.addAnnotations(annotations)
+        func syncAnnotations () {
+            guard let mapView = mapView else { return }
+
+            let annotationsById = Dictionary(uniqueKeysWithValues: annotations.map { ($0.id, $0)})
+
+            let oldAnnotationIds = Set((mapView.annotations as! [MapAnno]).map { $0.id })
+            let newAnnotationIds = Set(annotationsById.values.map { $0.id })
+
+            let idsForAnnotationsToRemove = oldAnnotationIds.subtracting(newAnnotationIds)
+            let annotationsToRemove = idsForAnnotationsToRemove.compactMap { idToRemove in
+                (mapView.annotations as! [MapAnno]).first(where: { $0.id == idToRemove })
+            }
+            if !annotationsToRemove.isEmpty {
+                mapView.removeAnnotations(annotationsToRemove)
+            }
+
+            let idsForAnnotationsToAdd = newAnnotationIds.subtracting(oldAnnotationIds)
+            let annotationsToAdd = idsForAnnotationsToAdd.compactMap { idToAdd in
+                (mapView.annotations as! [MapAnno]).first(where: { $0.id == idToAdd })
+            }
+            if !annotationsToRemove.isEmpty {
+                mapView.addAnnotations(annotationsToAdd)
+            }
         }
 
         func mapViewDidChangeVisibleRegion (_ mapView: MKMapView) {

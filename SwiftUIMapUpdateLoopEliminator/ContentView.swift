@@ -7,9 +7,20 @@
 //
 
 import SwiftUI
+import MapKit
+import CoreLocation
 
-var _annotations = (0...50).map { _ in
-    AnnotationViewModel(coordinate: .random)
+class MapAnno: NSObject, MKAnnotation {
+    var id = UUID().uuidString
+    var coordinate: CLLocationCoordinate2D
+
+    init (_ coord: CLLocationCoordinate2D) {
+        coordinate = coord
+    }
+}
+
+var _annotations = (0..<50).map { _ in
+    MapAnno(.random)
 }
 
 struct ContentView: View {
