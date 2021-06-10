@@ -8,6 +8,11 @@ import CoreGraphics
 import MapKit
 
 struct MapViewRepresentable: UIViewRepresentable {
+    /// This prop must be observed to react to
+    /// MapViewState.focused annotation being set
+    ///
+    /// This is how the loop is kicked off.
+    /// What different strategy can be used here?
     @ObservedObject var state: MapViewState
     var annotations = [MapAnno]()
 
@@ -32,7 +37,10 @@ struct MapViewRepresentable: UIViewRepresentable {
     func updateUIView (_ uiView: MKMapView, context: Context) {
         print("Updating viewRep")
         context.coordinator.annotations = annotations
+        /// Clicking on an annotaion updates published property on MapViewState
         if let focused = state.focused {
+            /// This will cause the MKMapViewDelegate method
+            /// mapViewDidChangeVisibleRegion (_ mapView: MKMapView) to be called
             uiView.setCenter(focused.coordinate, animated: true)
         }
     }

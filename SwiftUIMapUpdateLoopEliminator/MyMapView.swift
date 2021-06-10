@@ -20,6 +20,8 @@ struct MyMapView: View {
     var body: some View {
         ZStack {
             MapViewRepresentable(state: mapState) { coordinator in
+                /// This block is executed immediately (?) by
+                /// MKMapViewDelegate mapViewDidChangeVisibleRegion (_ mapView: MKMapView)
                 DispatchQueue.global(qos: .userInteractive).async {
                     let updated = coordinator.annotations.map { annotation -> AnnotationViewModel in
                         var result = AnnotationViewModel(coordinate: annotation.coordinate)
