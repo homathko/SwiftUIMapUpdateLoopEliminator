@@ -35,13 +35,18 @@ struct MapViewRepresentable: UIViewRepresentable {
     }
 
     func updateUIView (_ uiView: MKMapView, context: Context) {
+        defer { context.coordinator.oldState = state }
+
         print("Updating viewRep")
         context.coordinator.annotations = annotations
-        /// Clicking on an annotaion updates published property on MapViewState
-        if let focused = state.focused {
-            /// This will cause the MKMapViewDelegate method
-            /// mapViewDidChangeVisibleRegion (_ mapView: MKMapView) to be called
-            uiView.setCenter(focused.coordinate, animated: true)
+        /// Clicking on an annotation updates published property on MapViewState
+        /// Has the state changed?
+        if state != context.coordinator.oldState {
+            if let focused = state.focused {
+                /// This will cause the MKMapViewDelegate method
+                /// mapViewDidChangeVisibleRegion (_ mapView: MKMapView) to be called
+                uiView.setCenter(focused.coordinate, animated: true)
+            }
         }
     }
 
@@ -52,6 +57,7 @@ struct MapViewRepresentable: UIViewRepresentable {
     class Coordinator: NSObject, MKMapViewDelegate {
         var parent: MapViewRepresentable?
         var mapView: MKMapView?
+        var oldState: MapViewState?
         var annotations: [MapAnno] = [] {
             didSet {
                 syncAnnotations()
@@ -95,5 +101,12 @@ extension CLLocationCoordinate2D {
             latitude: CLLocationDegrees.random(in: 32...34),
             longitude: CLLocationDegrees.random(in: -1...1)
         )
+    }
+}
+
+extension CLLocationCoordinate2D: Equatable {
+    public static func == (lhs: CLLocationCoordinate2D, rhs: CLLocationCoordinate2D) -> Bool {
+        print("Comparing latitude: \(lhs.latitude) - \(rhs.latitude)")
+        return lhs.latitude == rhs.latitude && rhs.longitude == rhs.longitude
     }
 }

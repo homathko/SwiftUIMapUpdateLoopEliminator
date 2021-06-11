@@ -4,6 +4,11 @@
 
 import SwiftUI
 
-class MapViewState: ObservableObject {
+class MapViewState: ObservableObject, Equatable {
+    static func == (lhs: MapViewState, rhs: MapViewState) -> Bool {
+        lhs.focused == rhs.focused
+    }
+
+
     @Published var focused: AnnotationViewModel?
 }

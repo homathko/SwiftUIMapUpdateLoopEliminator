@@ -6,22 +6,22 @@ import SwiftUI
 import MapKit
 import CoreLocation
 
-struct AnnotationViewModel: Identifiable {
+struct AnnotationViewModel: Identifiable, Equatable {
     var id = UUID().uuidString
     var coordinate: CLLocationCoordinate2D
     var screenCoordinates: CGPoint?
 }
 
 struct MyMapView: View {
-    var mapState: MapViewState = .init()
+    @StateObject var mapState: MapViewState = .init()
     var annotations: [MapAnno]
     @State var visibleSprites: [AnnotationViewModel] = []
 
     var body: some View {
         ZStack {
             MapViewRepresentable(state: mapState) { coordinator in
-                /// This block is executed immediately (?) by
-                /// MKMapViewDelegate mapViewDidChangeVisibleRegion (_ mapView: MKMapView)
+                /// This block is called within MKMapViewDelegate
+                /// mapViewDidChangeVisibleRegion (_ mapView: MKMapView)
                 DispatchQueue.global(qos: .userInteractive).async {
                     let updated = coordinator.annotations.map { annotation -> AnnotationViewModel in
                         var result = AnnotationViewModel(coordinate: annotation.coordinate)
@@ -30,14 +30,14 @@ struct MyMapView: View {
                     }
 
                     DispatchQueue.main.async {
-                        self.visibleSprites = updated
+                        visibleSprites = updated
                     }
                 }
             }
                     .annotations(annotations)
 
             /// This layer shows the annotations
-            ForEach(visibleSprites, id: \.id) { annotation in
+            ForEach(visibleSprites) { annotation in
                 AnimatedAnnotation(viewModel: annotation)
             }
         }
