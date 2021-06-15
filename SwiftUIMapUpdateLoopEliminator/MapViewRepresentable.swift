@@ -26,8 +26,8 @@ struct MapViewRepresentable: UIViewRepresentable {
 
     func makeUIView (context: Context) -> MKMapView {
         let mapView = MKMapView()
-        mapView.setCenter(CLLocationCoordinate2D(latitude: 33.0, longitude: 0.0), animated: true)
-        mapView.setCameraZoomRange(.init(maxCenterCoordinateDistance: 1000000), animated: false)
+        let camera = MKMapCamera(lookingAtCenter: CLLocationCoordinate2D(latitude: 33.0, longitude: 0.0), fromDistance: 1000000, pitch: 0.0, heading: 0.0)
+        mapView.setCamera(camera, animated: true)
         mapView.delegate = context.coordinator
         context.coordinator.parent = self
         context.coordinator.mapView = mapView
@@ -35,7 +35,7 @@ struct MapViewRepresentable: UIViewRepresentable {
     }
 
     func updateUIView (_ uiView: MKMapView, context: Context) {
-        defer { context.coordinator.oldState = state }
+        defer { context.coordinator.oldState = state.copy() as! MapViewState }
 
         print("Updating viewRep")
         context.coordinator.annotations = annotations
@@ -106,7 +106,6 @@ extension CLLocationCoordinate2D {
 
 extension CLLocationCoordinate2D: Equatable {
     public static func == (lhs: CLLocationCoordinate2D, rhs: CLLocationCoordinate2D) -> Bool {
-        print("Comparing latitude: \(lhs.latitude) - \(rhs.latitude)")
-        return lhs.latitude == rhs.latitude && rhs.longitude == rhs.longitude
+        lhs.latitude == rhs.latitude && rhs.longitude == rhs.longitude
     }
 }

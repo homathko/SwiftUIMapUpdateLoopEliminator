@@ -4,7 +4,13 @@
 
 import SwiftUI
 
-class MapViewState: ObservableObject, Equatable {
+class MapViewState: ObservableObject, NSCopying, Equatable {
+    func copy (with zone: NSZone? = nil) -> Any {
+        let copy = MapViewState()
+        copy.focused = focused
+        return copy
+    }
+
     static func == (lhs: MapViewState, rhs: MapViewState) -> Bool {
         lhs.focused == rhs.focused
     }
